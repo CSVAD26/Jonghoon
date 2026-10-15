@@ -3,7 +3,7 @@ let cols = 3, rows = 3;
 let cellColors = [];
 let input;
 let x = 0, y = 0, w = 0, h = 0;
-let lines = [];
+let layer;
 let start = null;
 let spiral = true;
 
@@ -12,6 +12,11 @@ function setup() {
   colorMode(HSB, 360, 100, 100, 1);
   textAlign(CENTER, CENTER);
   textSize(14);
+
+  layer = createGraphics(width, height);
+  layer.colorMode(HSB, 360, 100, 100, 1);
+  layer.stroke(160, 100, 100);
+  layer.strokeWeight(4);
 
   createP("Upload an image:");
   input = createFileInput(handleFile);
@@ -59,7 +64,7 @@ function resetcolors() {
 }
 
 function clearall() {
-  lines = [];
+  layer.clear();
   start = null;
   resetcolors();
 }
@@ -128,26 +133,18 @@ function mouseReleased() {
   let endy = constrain(mouseY, y, y + h);
 
   if (dist(start.x, start.y, endx, endy) > 3) {
-    lines.push({
-      x1: start.x,
-      y1: start.y,
-      x2: endx,
-      y2: endy
-    });
+    layer.line(start.x, start.y, endx, endy);
   }
 
   start = null;
 }
 
 function drawlines() {
-  stroke(160, 100, 100);
-  strokeWeight(4);
-
-  for (let guide of lines) {
-    line(guide.x1, guide.y1, guide.x2, guide.y2);
-  }
+  image(layer, 0, 0);
 
   if (start) {
+    stroke(160, 100, 100);
+    strokeWeight(4);
     line(
       start.x,
       start.y,
@@ -158,11 +155,11 @@ function drawlines() {
 }
 
 function keyPressed() {
-  if (key == 'g' || key == 'G') {
+  if (key == 'g') {
     spiral = !spiral;
   }
 
-  if (key == 'c' || key == 'C') {
+  if (key == 'c') {
     clearall();
   }
 }
