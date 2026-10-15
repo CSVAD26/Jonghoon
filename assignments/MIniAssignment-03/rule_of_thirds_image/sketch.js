@@ -1,35 +1,22 @@
 let img;
 let cols = 3, rows = 3;
 let cellColors = [];
-let x = 0, y = 0;
-let w = 0, h = 0;
+let input;
+let x = 0, y = 0, w = 0, h = 0;
 let lines = [];
-let cnt = null;
-let showSpiral = true;
+let start = null;
+let spiral = true;
 
 function setup() {
   createCanvas(800, 600);
-  colorMode(HSB);
+  colorMode(HSB, 360, 100, 100, 1);
   textAlign(CENTER, CENTER);
   textSize(14);
 
   createP("Upload an image:");
-  createFileInput(handleFile);
-  createP("Click: highlight cell | Shift + drag: draw line | G: spiral | C: clear");
-
-  resetCellColors();
-
-  window.addEventListener("keydown", (event) => {
-    if (event.repeat) return;
-
-    if (event.key.toLowerCase() === "g") {
-      showSpiral = !showSpiral;
-    }
-
-    if (event.key.toLowerCase() === "c") {
-      clearAnnotations();
-    }
-  }, true);
+  input = createFileInput(handleFile);
+  createP("Click: highlight cell, Shift + drag: draw line, G: spiral | C: clear");
+  resetcolors();
 }
 
 function draw() {
@@ -38,10 +25,10 @@ function draw() {
   if (img) {
     image(img, x, y, w, h);
     drawGrid();
-    drawLines();
+    drawlines();
 
-    if (showSpiral) {
-      drawGoldenSpiral();
+    if (spiral) {
+      drawspiral();
     }
   } else {
     fill(0);
@@ -51,30 +38,30 @@ function draw() {
 }
 
 function handleFile(file) {
-  if (file.type === "image") {
+  if (file.type == 'image') {
     img = loadImage(file.data, () => {
       let scale = min(width / img.width, height / img.height);
       w = img.width * scale;
       h = img.height * scale;
       x = (width - w) / 2;
       y = (height - h) / 2;
-      clearAnnotations();
+      clearall();
     });
   } else {
     img = null;
   }
 }
 
-function resetCellColors() {
+function resetcolors() {
   for (let i = 0; i < cols * rows; i++) {
     cellColors[i] = color(0, 0, 95, 0.2);
   }
 }
 
-function clearAnnotations() {
+function clearall() {
   lines = [];
-  cnt = null;
-  resetCellColors();
+  start = null;
+  resetcolors();
 }
 
 function drawGrid() {
@@ -103,47 +90,56 @@ function drawGrid() {
   for (let j = 1; j < rows; j++) {
     line(x, y + j * cellH, x + w, y + j * cellH);
   }
+
+  noStroke();
+  fill(0);
 }
 
-function mousePressed(event) {
+function mousePressed() {
   if (!img) return;
   if (mouseX < x || mouseX >= x + w || mouseY < y || mouseY >= y + h) return;
 
-  if (event.shiftKey) {
-    cnt = { x: mouseX, y: mouseY };
+  if (keyIsDown(SHIFT)) {
+    start = { x: mouseX, y: mouseY };
     return;
   }
 
-  let i = floor((mouseX - x) / (w / cols));
-  let j = floor((mouseY - y) / (h / rows));
+  let cellW = w / cols;
+  let cellH = h / rows;
+  let i = floor((mouseX - x) / cellW);
+  let j = floor((mouseY - y) / cellH);
   let index = j * cols + i;
 
+  let current = cellColors[index];
   let blue = color(210, 80, 80, 0.4);
   let gray = color(0, 0, 95, 0.2);
 
-  cellColors[index] =
-    hue(cellColors[index]) === hue(blue) ? gray : blue;
+  if (hue(current) == hue(blue)) {
+    cellColors[index] = gray;
+  } else {
+    cellColors[index] = blue;
+  }
 }
 
 function mouseReleased() {
-  if (!cnt) return;
+  if (!start) return;
 
-  let endX = constrain(mouseX, x, x + w);
-  let endY = constrain(mouseY, y, y + h);
+  let endx = constrain(mouseX, x, x + w);
+  let endy = constrain(mouseY, y, y + h);
 
-  if (dist(cnt.x, cnt.y, endX, endY) > 3) {
+  if (dist(start.x, start.y, endx, endy) > 3) {
     lines.push({
-      x1: cnt.x,
-      y1: cnt.y,
-      x2: endX,
-      y2: endY
+      x1: start.x,
+      y1: start.y,
+      x2: endx,
+      y2: endy
     });
   }
 
-  cnt = null;
+  start = null;
 }
 
-function drawLines() {
+function drawlines() {
   stroke(160, 100, 100);
   strokeWeight(4);
 
@@ -151,45 +147,55 @@ function drawLines() {
     line(guide.x1, guide.y1, guide.x2, guide.y2);
   }
 
-  if (cnt) {
+  if (start) {
     line(
-      cnt.x,
-      cnt.y,
+      start.x,
+      start.y,
       constrain(mouseX, x, x + w),
       constrain(mouseY, y, y + h)
     );
   }
 }
 
-// AI helped me find the golden spiral formula.
-function drawGoldenSpiral() {
-  const phi = (1 + sqrt(5)) / 2;
-  const maxAngle = TWO_PI * 3;
-  const points = [];
+function keyPressed() {
+  if (key == 'g' || key == 'G') {
+    spiral = !spiral;
+  }
 
-  let minX = Infinity, maxX = -Infinity;
-  let minY = Infinity, maxY = -Infinity;
+  if (key == 'c' || key == 'C') {
+    clearall();
+  }
+}
+
+// I used AI to help write the spiral
+function drawspiral() {
+  let phi = (1 + sqrt(5)) / 2;
+  let maxangle = TWO_PI * 3;
+  let points = [];
+
+  let minx = Infinity, maxx = -Infinity;
+  let miny = Infinity, maxy = -Infinity;
 
   for (let i = 0; i <= 500; i++) {
-    let angle = maxAngle * i / 500;
-    let radius = pow(phi, (angle - maxAngle) / HALF_PI);
+    let angle = maxangle * i / 500;
+    let radius = pow(phi, (angle - maxangle) / HALF_PI);
     let px = radius * cos(angle);
     let py = radius * sin(angle);
 
     points.push({ x: px, y: py });
-    minX = min(minX, px);
-    maxX = max(maxX, px);
-    minY = min(minY, py);
-    maxY = max(maxY, py);
+    minx = min(minx, px);
+    maxx = max(maxx, px);
+    miny = min(miny, py);
+    maxy = max(maxy, py);
   }
 
   let scale = min(
-    w * 0.94 / (maxX - minX),
-    h * 0.94 / (maxY - minY)
+    w * 0.94 / (maxx - minx),
+    h * 0.94 / (maxy - miny)
   );
 
-  let offsetX = x + (w - (maxX - minX) * scale) / 2 - minX * scale;
-  let offsetY = y + (h - (maxY - minY) * scale) / 2 - minY * scale;
+  let offsetx = x + (w - (maxx - minx) * scale) / 2 - minx * scale;
+  let offsety = y + (h - (maxy - miny) * scale) / 2 - miny * scale;
 
   push();
   noFill();
@@ -199,8 +205,8 @@ function drawGoldenSpiral() {
   beginShape();
   for (let point of points) {
     vertex(
-      offsetX + point.x * scale,
-      offsetY + point.y * scale
+      offsetx + point.x * scale,
+      offsety + point.y * scale
     );
   }
   endShape();
