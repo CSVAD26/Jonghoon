@@ -1,6 +1,6 @@
 # Pacific Child
 
-https://jonghoonahn.com/pacificchild/
+https://jonghoonahn.com/Pacific_Child/
 
 An interactive data self-portrait in p5.js
 The Pacific as the center
