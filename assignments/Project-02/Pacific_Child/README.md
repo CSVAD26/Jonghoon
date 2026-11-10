@@ -1,6 +1,6 @@
-##Child of the Pacific
+# Room for One More
 
-jonghoonahn.com/pacificchild
+https://jonghoonahn.com/pacificchild/
 
 An interactive data self-portrait in p5.js
 The Pacific as the center
