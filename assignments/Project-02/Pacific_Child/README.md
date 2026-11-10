@@ -1,4 +1,6 @@
-Child of the Pacific
+#Child of the Pacific
+
+jonghoonahn.com/pacificchild
 
 An interactive data self-portrait in p5.js
 The Pacific as the center
